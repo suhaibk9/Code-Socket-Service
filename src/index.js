@@ -9,9 +9,10 @@ const httpServer = createServer(app);
 const redisCache = new redis();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+// app.use(bodyParser.json());
 const io = new Server(httpServer, {
   cors: {
-    origin: 'http://127.0.0.1:5500',
+    origin: 'http://localhost:5500',
     methods: ['GET', 'POST'],
   },
 });
@@ -32,11 +33,19 @@ io.on('connection', (socket) => {
 });
 app.post('/sendPayload', async (req, res) => {
   const { userId, payload } = req.body;
+
   if (!userId || !payload) {
     res.status(400).send('Invalid request');
   }
   const socketId = await redisCache.get(userId);
+  console.log('Request Body:' + req.body + ' Socket Id:', socketId);
   if (socketId) {
+    console.log(
+      'Sending payload to user:',
+      userId + ' Socket Id:',
+      socketId + ' Payload:',
+      payload
+    );
     io.to(socketId).emit('submissionPayloadResponse', payload);
     res.send('Payload Sent Successfully');
   } else {
